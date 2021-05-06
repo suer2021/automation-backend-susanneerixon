@@ -1,7 +1,7 @@
 import * as clientHelpers from '../helpers/clientHelpers'
 import * as roomHelpers from '../helpers/roomHelpers'
 
-describe('testing auth', function(){
+describe('test suite', function(){
 
    it('Create a new room', function(){
       roomHelpers.createRoomRequest(cy)
