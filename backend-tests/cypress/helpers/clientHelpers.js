@@ -2,6 +2,7 @@ const faker = require('faker')
 
 const ENDPOINT_GET_CLIENTS = 'http://localhost:3000/api/clients'
 const ENDPOINT_POST_CLIENT = 'http://localhost:3000/api/client/new'
+const ENDPOINT_GET_CLIENT = 'http://localhost:3000/api/client/'
 
 function createRandomClientPayload(){
     const fakeName = faker.name.firstName()
@@ -51,6 +52,34 @@ function getAllClientsRequest(cy){
     }))
 }
 
+function deleteRequestAfterGet(cy){
+    // GET request to fetch all clients
+    cy.request({
+        method: 'GET',
+        url: ENDPOINT_GET_CLIENTS,
+        headers:{
+            'X-User-Auth': JSON.stringify(Cypress.env().loginToken),
+            'Content-Type': 'application/json'
+        },
+    }).then((Response =>{
+        //const responseAsString = JSON.stringify(Response)
+        let lastId = Response.body[Response.body.length -1].id
+        cy.request({
+            method: "DELETE",
+            url: ENDPOINT_GET_CLIENT+lastId,
+            headers:{
+                'X-User-Auth': JSON.stringify(Cypress.env().loginToken),
+                'Content-Type': 'application/json'
+            },
+        }).then((Response =>{
+            //cy.log(JSON.stringify(Response))
+            const responseAsString = JSON.stringify(Response.body)
+            cy.log(responseAsString)
+            expect(responseAsString).to.have.string('true')
+        }))
+    }))
+}
+
 function createClientRequest(cy){
     cy.authenticateSession().then((response =>{
         let fakeClientPayload = createRandomClientPayload() 
@@ -73,8 +102,32 @@ function createClientRequest(cy){
     }))
 }
 
+function createClientRequestAndDelete(cy){
+    cy.authenticateSession().then((Response =>{
+        let fakeClientPayload = createRandomClientPayload()
+        
+        // post request to create a client
+        cy.request({
+            method: 'POST',
+            url: ENDPOINT_POST_CLIENT,
+            headers:{
+                'X-User-Auth': JSON.stringify(Cypress.env().loginToken),
+                'Content-Type': 'application/json'
+            },
+            body: fakeClientPayload
+        }).then((Response =>{
+            //cy.log(JSON.stringify(Response))
+            const responseAsString = JSON.stringify(Response)
+            expect(responseAsString).to.have.string(fakeClientPayload.name)
+        }))
+        //delete
+        deleteRequestAfterGet(cy)
+    }))
+}
+
 module.exports = {
     createRandomClientPayload, 
     createClientRequest, 
-    getAllClientsRequest
+    getAllClientsRequest,
+    createClientRequestAndDelete
 }
